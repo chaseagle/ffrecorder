@@ -1,0 +1,76 @@
+#idDivCalendar
+{
+	float:right;
+	margin-right:40px;
+}
+
+.day-visit-star-0
+{
+	background-color:#ffffff;
+}
+
+.day-visit-star-1
+{
+	background-color:#daf3cb;
+}
+
+.day-visit-star-2
+{
+	background-color:#aade8a;
+}
+
+.day-visit-star-3
+{
+	background-color:#6dc738;
+}
+
+.day-visit-star-4
+{
+	background-color:#4e991f;
+}
+
+#idDivSearch
+{
+	margin:20px;
+}
+
+#idDivDate
+{
+	font-size:14px;
+	font-style:bold;
+	margin:10px;
+}
+
+#idRecordList
+{
+	margin:30px;
+}
+
+.clsRecord
+{
+	font-size:12px;
+	padding-bottom:10px;
+}
+
+.clsVisitDate
+{
+	font-size:10px;
+	margin-right:20px;
+	padding:4px;
+	background-color:#E5ECF9;
+	color:#666666;
+	float: left;
+}
+
+.clsTitle
+{
+	margin-left:10px;
+	width:600px;
+}
+
+.clsTitle a
+{
+	text-decoration:none;
+	color:#0000CC;
+}
+
