@@ -1,0 +1,9 @@
+Exception: STATUS_INTEGER_DIVIDE_BY_ZERO at eip=7FF99B29
+eax=00000133 ebx=1930CE00 ecx=000000A2 edx=00000000 esi=00000000 edi=1930CE64
+ebp=1930CD90 esp=1930C64C program=D:\Programs\cygwin\cygwin\bin\bash.exe, pid 2816, thread unknown (0xD8)
+cs=001B ds=0023 es=0023 fs=003B gs=0000 ss=0023
+Stack trace:
+Frame     Function  Args
+1930CD90  7FF99B29  (7FF4D97C, 00000000, 7FF9A490, 1930DF50)
+1930CDC0  7FF4D609  (7FF4CB08, 61004AE6, 00000000, 1930CE00)
+End of stack trace
