@@ -59,13 +59,36 @@
 	padding:4px;
 	background-color:#E5ECF9;
 	color:#666666;
-	float: left;
+}
+
+.clsDivStar
+{
+	display:block;
+	height:15px;
+	overflow:hidden;
+	position:relative;
+	width:15px;
+	cursor:pointer;
+}
+
+.clsStarOff
+{
+	left:-15px;
+	position:absolute;
+	top:0;
+}
+
+.clsStarOn
+{
+	left:0;
+	position:absolute;
+	top:0;
 }
 
 .clsTitle
 {
-	margin-left:10px;
 	width:600px;
+	font-size:12px;
 }
 
 .clsTitle a

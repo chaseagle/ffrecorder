@@ -20,6 +20,7 @@
 </div>
 <div id="idRecordList">
 <?php
+define("BUSS_LAYER",1);
 require_once('db.php');
 if($_SERVER['REQUEST_METHOD'] == 'GET')
 {
@@ -33,18 +34,24 @@ if($_SERVER['REQUEST_METHOD'] == 'GET')
 	}
 	$r = getRecords($d);
 	echo '<div id="idDivDate">' . $d  . '</div>';
+	echo '<table>';
 	for ($ii = 0, $jj = count($r); $ii < $jj ; $ii++)
 	{
-		echo '<div class="clsRecord"><div class="clsVisitDate">' . substr($r[$ii]['visit_date'],-8) . '</div><div class="clsTitle"><a href="' . $r[$ii]['href'] . '" target="_blank">' . $r[$ii]['title'] . '</a></div></div>';
+		$classname =  $r[$ii]['favorite']? 'clsStarOn' : 'clsStarOff';
+		echo '<tr><td class="clsVisitDate">' . substr($r[$ii]['visit_date'],-8) . '</td>
+			<td><div class="clsDivStar" id="' . $r[$ii]['id'] . '"><img  class="' . $classname . '" src="public/images/sprite.png" /></div></td>
+			<td class="clsTitle"><a href="' . $r[$ii]['href'] . '" target="_blank">' . $r[$ii]['title'] . '</a></td></tr>';
 	}
+	echo '</table>';
 }
 else
 {
-	$r = searchRecords($_POST['searchTxt']);
+	$r = searchPages($_POST['searchTxt']);
 	echo '<div id="idDivDate">搜索结果：</div>';
+	
 	for ($ii = 0, $jj = count($r); $ii < $jj ; $ii++)
 	{
-		echo '<div class="clsRecord"><div class="clsVisitDate">' . $r[$ii]['visit_date'] . '</div><div class="clsTitle"><a href="' . $r[$ii]['href'] . '" target="_blank">' . $r[$ii]['title'] . '</a></div></div>';
+		echo '<div class="clsRecord"><div class="clsVisitDate">共访问' . $r[$ii]['amount'] . '次</div><div class="clsTitle"><a href="' . $r[$ii]['href'] . '" target="_blank">' . $r[$ii]['title'] . '</a></div></div>';
 	}	
 }
 

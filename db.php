@@ -1,4 +1,7 @@
 <?php
+
+defined('BUSS_LAYER') || die('不允许直接调用该页面。');
+
 function connectDb()
 {
 	static $conn = null;
@@ -89,16 +92,142 @@ function increHost($host)
 	}
 }
 
-function createRecord($title, $host, $href)
+function getPageIdByHref($href)
 {
-	$sql = 'insert into records(title, host, href, visit_date)
-			values(:title, :host, :href, :visit_date)';
+	$hash = md5($href);
+	$sql = 'select id from pages where hash=:hash limit 1;';
 	$c = connectDb();
 	$sth = $c->prepare($sql);
-	$r = $sth->execute(array(':title' => htmlspecialchars($title,ENT_QUOTES),
-			    ':host' => $host,
-			    ':href' => $href,
-			    ':visit_date' => date('Y-m-d H:i:s')
+	$r = $sth->execute(array(':hash' => $hash));
+	if(!$r)
+	{
+		echo '获取页面IP出错:';
+		die(var_dump($sth->errorInfo()));
+	}
+	$r = $sth->fetchAll();
+	$sth->closeCursor();
+	if(count($r) == 0)
+	{
+		return -1;
+	}
+	return $r[0]['id'];
+}
+
+function increPage($title,$host,$href)
+{
+	$hash = md5($href);
+	$sql = 'select amount from pages where hash=:hash limit 1;';
+	$c = connectDb();
+	$sth = $c->prepare($sql);
+	$r = $sth->execute(array(':hash' => $hash));
+	if(!$r)
+	{
+		echo '插入页面统计出错:';
+		die(var_dump($sth->errorInfo()));
+	}
+	$r = $sth->fetchAll();
+	$sth->closeCursor();
+	$amount = 0;
+	if(count($r) == 1)
+	{
+		$amount = $r[0]['amount'];
+	}
+	if(0 == $amount)
+	{
+		$sql = 'insert into pages(title, host, href, hash) values(:title, :host, :href, :hash)';
+		$sth = $c->prepare($sql);
+		$r = $sth->execute(array(':title' => htmlspecialchars($title,ENT_QUOTES), ':host' => $host, ':href' => $href, ':hash' => $hash));
+		if(!$r)
+		{
+			echo '插入页面统计错误:';
+			die(var_dump($sth->errorInfo()));
+		}
+	}
+	else
+	{
+		$sql = 'update pages set amount=:amount where hash=:hash';
+		$sth = $c->prepare($sql);
+		$r = $sth->execute(array(':hash' => $hash, ':amount' => $amount + 1));	
+		if(!$r)
+		{
+			echo '插入页面统计错误:';
+			die(var_dump($sth->errorInfo()));
+		}
+	}	
+	return getPageIdByHref($href);
+}
+
+function getPages()
+{
+	$sql = 'select * from pages order by amount desc';
+	$c = connectDb();
+	$sth = $c->prepare($sql);
+	$r = $sth->execute(array());
+	$r = $sth->fetchAll();
+	$sth->closeCursor();
+	return $r;
+
+}
+
+function setMine($pageId, $favorite)
+{
+	$hash = md5($href);
+	$sql = 'select id from pages where id=:pageId limit 1;';
+	$c = connectDb();
+	$sth = $c->prepare($sql);
+	$r = $sth->execute(array(':pageId' => $pageId));
+	if(!$r)
+	{
+		echo '设置最爱页面出错:';
+		die(var_dump($sth->errorInfo()));
+	}
+	$r = $sth->fetchAll();
+	$sth->closeCursor();
+	if(count($r) != 1)
+	{
+		echo '设置最爱页面不存在:';
+		die(var_dump($sth->errorInfo()));
+	}
+	
+	$sql = 'update pages set favorite=:favorite where id=:pageId';
+	$sth = $c->prepare($sql);
+	$r = $sth->execute(array(':pageId' => $pageId, ':favorite'=>$favorite));	
+	if(!$r)
+	{
+		echo '设置最爱页面出错:';
+		die(var_dump($sth->errorInfo()));
+	}	
+}
+
+function getMine()
+{
+	$sql = 'select * from pages where favorite=true order by amount desc';
+	$c = connectDb();
+	$sth = $c->prepare($sql);
+	$r = $sth->execute(array());
+	$r = $sth->fetchAll();
+	$sth->closeCursor();
+	return $r;
+}
+
+function createRecord($title, $host, $href, $visit_date='')
+{
+	$pageId = increPage($title, $host, $href);
+	//$pageId = getPageIdByHref($href);
+	if('' == $visit_date)
+	{
+		$visit_date = date('Y-m-d H:i:s');
+	}
+	if($pageId == -1)
+	{
+		echo '获取页面ID失败。';
+	}
+	$sql = 'insert into records(page_id, visit_date)
+		values(:pageId, :visit_date)';
+	$c = connectDb();
+	$sth = $c->prepare($sql);
+	$r = $sth->execute(array(':pageId' => $pageId,
+			    ':visit_date' => $visit_date
 		    ));
 	if(!$r)
 	{
@@ -111,10 +240,25 @@ function createRecord($title, $host, $href)
 
 function getRecords($d)
 {
-	$sql = 'select * from records where visit_date between :start and :end order by visit_date desc  ';
-	$c = connectDb();
-	$sth = $c->prepare($sql);
-	$r = $sth->execute(array(':start' => $d . ' 00:00:00', ':end' => $d . ' 23:59:59'));
+	if('' == $d)
+	{
+		$sql = 'select records.visit_date as visit_date, pages.title as title, pages.id as id, 
+			pages.href as href, pages.host as host, pages.favorite as favorite
+		       	from records left join pages on(pages.id=records.page_id) order by visit_date desc  ';
+		$c = connectDb();
+		$sth = $c->prepare($sql);
+		$r = $sth->execute(array());
+	}
+	else
+	{
+		$sql = 'select records.visit_date as visit_date, pages.title as title, pages.id as id, 
+			pages.href as href, pages.host as host, pages.favorite as favorite 
+		       	from records left join pages on(pages.id=records.page_id) where records.visit_date between :start and :end order by visit_date desc  ';
+		$c = connectDb();
+		$sth = $c->prepare($sql);
+		$r = $sth->execute(array(':start' => $d . ' 00:00:00', ':end' => $d . ' 23:59:59'));
+	}
+	
 	if(!$r)
 	{
 		echo '获取数据错误:';
@@ -125,9 +269,9 @@ function getRecords($d)
 	return $r;
 }
 
-function searchRecords($txt)
+function searchPages($txt)
 {
-	$sql = 'select * from records where title like :txt order by visit_date desc  ';
+	$sql = 'select * from pages where title like :txt order by amount desc  ';
 	$c = connectDb();
 	$sth = $c->prepare($sql);
 	$r = $sth->execute(array(':txt' => '%' . $txt . '%'));
@@ -136,7 +280,7 @@ function searchRecords($txt)
 		echo '获取数据错误:';
 		die(var_dump($sth->errorInfo()));
 	}
-	$r = array_reverse($sth->fetchAll());
+	$r = $sth->fetchAll();
 	$sth->closeCursor();
 	return $r;
 

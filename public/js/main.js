@@ -10,7 +10,7 @@ $(document).ready(function(){
 					onChangeMonthYear:function(year,month,inst)
 					{
 						$.ajax({type :"GET",
-							url : "http://ffrecorder.com/ajax.php?m=" + year + '-' + (month<10? '0' + month : month),
+							url : "http://ffrecorder.com/ajax.php?a=count&m=" + year + '-' + (month<10? '0' + month : month),
 							success:function(r){
 								var counts  = r.split(':');
 								$("a.ui-state-default").each(function(){
@@ -41,5 +41,22 @@ $(document).ready(function(){
 						
 					}
 	});
-	
+	$(".clsDivStar").click(function(){
+		var urls = "http://ffrecorder.com/ajax.php?a=star&pid="+$(this).attr("id")+"&v=" + ($(this).children("img").attr("class") == "clsStarOff" ? '1' : '0');
+		$.ajax({type:"GET",
+			url :urls,
+			success:function(r){
+				var rs = r.split(':');
+				var id = rs[0];
+				var v = rs[1];
+				var nclass = (v == '1' ? 'clsStarOn' : 'clsStarOff');
+				$(".clsDivStar").each(function(){
+					if($(this).attr("id") == id)
+					{
+						$(this).children("img").attr("class", nclass);
+					}
+				});
+			}
+		});			
+	});	
 });

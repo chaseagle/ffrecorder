@@ -31,6 +31,7 @@
 		fwrite($f, $o . $c);
 		fclose($f);
 	}*/
+	define("BUSS_LAYER",1);
 	require_once('db.php');
 	if(isset($_POST['href']) && isset($_POST['title']) && isset($_POST['host']))
 	{
