@@ -112,6 +112,7 @@ function getKeywordsByMonth($m = '')
 	$r = $sth->execute(array(':visit_date' => $m));
 	$r = $sth->fetchAll();
 	$sth->closeCursor();
+	//return $r;
 	return sortKeywords($r);
 }
 /*
@@ -136,24 +137,25 @@ function sortKeywords($words)
 
 function sortKeywords($words)
 {
+	//return $words;
 	$r = array();
 	$c = count($words);
 	for($kk = 0, $mm = $c; $kk < $mm; $kk++)
 	{
-		$min = -1;
-		$min_v = 'zzzzzzzz';
+		$max = -1;
+		$max_v = 'A';
 		for($ii = 0, $jj = $c; $ii < $jj ; $ii++)
 		{
-			if($words[$ii] && (strcmp($min_v, $words[$ii]['keyword']) > 0))
+			if($words[$ii] && (strcmp($max_v, $words[$ii]['keyword']) < 0))
 			{
-				$min_v = $words[$ii]['keyword'];
-				$min = $ii;
+				$max_v = $words[$ii]['keyword'];
+				$max = $ii;
 			}
 		}
-		$r[$kk] = $words[$min];
-		unset($words[$min]); 
+		$r[$kk] = $words[$max];
+		unset($words[$max]); 
 	}
-	return $r;
+	return array_reverse($r);
 }
 
 function getKeywords()
@@ -351,6 +353,78 @@ function getMine()
 	return $r;
 }
 
+function filterChinese($title)
+{
+	$words = array();
+	$ii = 0;
+	$p = '/[^\x80-\xff]+?/m';
+	$r = explode(' ',preg_replace($p, ' ', $title));
+	foreach($r as $v)
+	{
+		$vv = trim($v);
+		if($vv != '')
+		{
+			$words[$ii] = $vv;
+			$ii++;
+		}
+	}
+	return implode('',$words);
+}
+
+function isChineseKeyExist($word)
+{
+	echo $word . ' ';
+	$sql = 'select * from chineses where keyword=:keyword';
+	$c = connectDb();
+	$sth = $c->prepare($sql);
+	$r = $sth->execute(array(':keyword' => $word));
+	if(!$r)
+	{
+		echo __FUNCTION__ . ' ERROR:';
+		die($sth->errorInfo());
+	}
+	$r = $sth->fetchAll();
+	$sth->closeCursor();
+	if(0 == count($r))
+	{
+		echo '.';
+		return false;
+	}
+	return true;
+}
+
+function increChineseKeyword($title)
+{
+	mb_internal_encoding("UTF-8");
+	$ii=0;
+	$jj=mb_strlen($title) - 1;
+	for(;$ii<$jj;)
+	{
+		if($ii+2<$jj && isChineseKeyExist(mb_substr($title, $ii, 4)))
+		{
+			increOneKeyword(mb_substr($title, $ii, 4));
+			increOneKeyword(mb_substr($title, $ii, 4), KEYWORD_TOTAL);		
+			$ii+=3;
+		}
+		elseif($ii+1<$jj && isChineseKeyExist(mb_substr($title, $ii, 3)))
+		{
+			increOneKeyword(mb_substr($title, $ii, 3));
+			increOneKeyword(mb_substr($title, $ii, 3), KEYWORD_TOTAL);
+			$ii+=2;
+		}
+		elseif(isChineseKeyExist(mb_substr($title, $ii, 2)))
+		{
+			increOneKeyword(mb_substr($title, $ii, 2));
+			increOneKeyword(mb_substr($title, $ii, 2), KEYWORD_TOTAL);
+			$ii++;
+		}
+		else
+		{
+			$ii++;
+		}
+	}
+}
+
 function createRecord($title, $host, $href, $visit_date='')
 {
 	$pageId = increPage($title, $host, $href);
@@ -378,6 +452,7 @@ function createRecord($title, $host, $href, $visit_date='')
 	increDay();
 	increHost($host);
 	increKeyword(segment($title));
+	increChineseKeyword(filterChinese($title));
 }
 
 function getRecords($d)
