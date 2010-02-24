@@ -2,6 +2,24 @@
 
 defined('BUSS_LAYER') || die('不允许直接调用该页面。');
 
+define('KEYWORD_TOTAL','1972-01-01');
+
+$excludeWords = array(
+	'Google',
+	'Search'	
+);
+
+function segment($str)
+{
+	return array_unique(explode(' ', preg_replace('/\s+/'," ",preg_replace("/[^-a-zA-Z0-9_]/"," ", $str))));
+}
+
+function filterKeyword($word)
+{
+	global $excludeWords;
+	return !in_array($word, $excludeWords);
+}
+
 function connectDb()
 {
 	static $conn = null;
@@ -18,6 +36,129 @@ function connectDb()
 		}
 	}
 	return $conn;
+}
+
+function increOneKeyword($word, $day = '')
+{
+	if('' == $day)
+	{
+		$day = date('Y-m-') . '01';
+	}
+	$sql = 'select amount from keywords where visit_date=:visit_date and keyword=:keyword limit 1;';
+	$c = connectDb();
+	$sth = $c->prepare($sql);
+	$r = $sth->execute(array(':visit_date' => $day, ':keyword' => $word));
+	if(!$r)
+	{
+		echo '插入关键词统计出错:';
+		die(var_dump($sth->errorInfo()));
+	}
+	$r = $sth->fetchAll();
+	$sth->closeCursor();
+	$amount = 0;
+	if(count($r) == 1)
+	{
+		$amount = $r[0]['amount'];
+	}
+	
+	if(0 == $amount)
+	{
+		$sql = 'insert into keywords(amount, visit_date, keyword) values(:amount, :visit_date, :keyword)';
+	}
+	else
+	{
+		$sql = 'update keywords set amount=:amount where visit_date=:visit_date and keyword=:keyword';
+	}
+	$sth = $c->prepare($sql);
+	$r = $sth->execute(array(':visit_date' => $day, ':amount' => $amount + 1, ':keyword' => $word));
+	if(!$r)
+	{
+		echo '插入关键词统计错误:';
+		die(var_dump($sth->errorInfo()));
+	}
+}
+
+function increKeyword($words)
+{
+	if(!is_array($words))
+	{
+		return;
+	}
+	for($ii = 0, $jj = count($words); $ii < $jj; $ii++)
+	{
+		$word = $words[$ii];
+		if(strlen($word) > 2)
+		{
+			if(filterKeyword($word))
+			{
+				increOneKeyword($word);
+				increOneKeyword($word, KEYWORD_TOTAL);
+			}
+		}
+	}
+}
+
+function getKeywordsByMonth($m = '')
+{
+	if($m == '')
+	{
+		$m = date('Y-m-') . '01';
+	}
+	$sql = 'select * from keywords where visit_date=:visit_date order by amount desc limit 50';
+	//$sql = 'select * from keywords where id in (select id from keywords where visit_date=:visit_date order by amount desc limit 50)';
+	
+	$c = connectDb();
+	$sth = $c->prepare($sql);
+	$r = $sth->execute(array(':visit_date' => $m));
+	$r = $sth->fetchAll();
+	$sth->closeCursor();
+	return sortKeywords($r);
+}
+/*
+function sortKeywords($words)
+{
+	$c = count($words);
+	for($kk = 0, $mm = $c; $kk < $mm; $kk++)
+	{
+		for($ii = 0, $jj = $c - 1 - $kk; $ii < $jj ; $ii++)
+		{
+			if(strcmp($words[$ii]['keyword'], $words[$ii+1]['keyword']) > 0)
+			{
+				$t = $words[$ii];
+				$words[$ii] = $words[$ii+1];
+				$words[$ii + 1] = $t;
+			}
+		}
+	}
+	return $words;
+}
+*/
+
+function sortKeywords($words)
+{
+	$r = array();
+	$c = count($words);
+	for($kk = 0, $mm = $c; $kk < $mm; $kk++)
+	{
+		$min = -1;
+		$min_v = 'zzzzzzzz';
+		for($ii = 0, $jj = $c; $ii < $jj ; $ii++)
+		{
+			if($words[$ii] && (strcmp($min_v, $words[$ii]['keyword']) > 0))
+			{
+				$min_v = $words[$ii]['keyword'];
+				$min = $ii;
+			}
+		}
+		$r[$kk] = $words[$min];
+		unset($words[$min]); 
+	}
+	return $r;
+}
+
+function getKeywords()
+{
+	return getKeywordsByMonth(KEYWORD_TOTAL);
 }
 
 function increDay()
@@ -236,6 +377,7 @@ function createRecord($title, $host, $href, $visit_date='')
 	}
 	increDay();
 	increHost($host);
+	increKeyword(segment($title));
 }
 
 function getRecords($d)

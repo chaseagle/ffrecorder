@@ -34,6 +34,68 @@
 	margin:20px;
 }
 
+#idDivKeywords
+{
+	float:right;
+	margin-right:35px;
+	clear:both;
+	width:180px;
+	position:relative;
+	word-break;normal;
+	text-align:center;
+}
+
+.clsDivKeywordTitle
+{
+	margin-top:40px;
+	color:#888888;
+	font-weight:bold;
+	background-color:#E5ECF9;
+	font-size:12px;
+	margin-bottom:5px;
+}
+.clsUlKeywords
+{
+	list-style-type:none;
+	margin-top:0px;
+	color:#0000CC;
+}
+
+.clsSpanKeyword_star_1
+{
+	font-size:10px;
+	margin-right:5px;
+	color:#20b2aa;
+}
+
+.clsSpanKeyword_star_2
+{
+	font-size:14px;
+	margin-right:5px;
+	color:#008080;
+}
+
+.clsSpanKeyword_star_3
+{
+	font-size:18px;
+	margin-right:5px;
+	color:#2f4f4f;
+}
+
+.clsSpanKeyword_star_4
+{
+	font-size:22px;
+	margin-right:5px;
+	color:#d2691E;
+}
+
+.clsSpanKeyword_star_5
+{
+	font-size:26px;
+	margin-right:5px;
+	color:#8b4513;
+}
+
 #idDivDate
 {
 	font-size:14px;
@@ -96,4 +158,5 @@
 	text-decoration:none;
 	color:#0000CC;
 }
+
 
