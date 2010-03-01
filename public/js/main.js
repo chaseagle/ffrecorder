@@ -41,6 +41,8 @@ $(document).ready(function(){
 						
 					}
 	});
+	$("#idDivCalendar").datepicker("setDate",$("#idHiddenSelectDay").val());
+	alert();
 	$(".clsDivStar").click(function(){
 		var urls = "http://ffrecorder.com/ajax.php?a=star&pid="+$(this).attr("id")+"&v=" + ($(this).children("img").attr("class") == "clsStarOff" ? '1' : '0');
 		$.ajax({type:"GET",

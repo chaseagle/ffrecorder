@@ -1,6 +1,12 @@
 <?php
 	define("BUSS_LAYER",1);
 	require_once('db.php');
+	$d = date('Y-m-d');
+	if(isset($_GET['d']))
+	{
+		$d = $_GET['d'];
+	}
+	$intervals = intval((strtotime($d) - strtotime(date('Y-m-d') . ' 0:00:00')) / 3600 / 24)
 ?>
 <html>
 <head>
@@ -15,6 +21,7 @@
 <body>
 	<div id="idDivCalendar">
 	</div>
+	<input type="hidden" id="idHiddenSelectDay" value="<?php echo $intervals;?>" name="hiddenSelectDay" />
 	<div id="idDivSearch">
 		<span>搜索历史记录</span>
 		<form id="idSearch" name="idSearch" method="post" action="">
@@ -28,7 +35,14 @@
 			<div  class="clsDivKeywordTitle">本月关键词</div>
 			<!--<ul id="idUlKeywordsMonth"  class="clsUlKeywords">-->
 				<?php
-					$r = getKeywordsByMonth();
+					$m = '';
+					if(isset($_GET['d']))
+					{
+						$d = $_GET['d'];
+						$kk = strrpos($d, '-');
+						$m = substr($d, 0, $kk) . '-01';
+					}
+					$r = getKeywordsByMonth($m);
 					for ($ii = 0, $jj = count($r); $ii < $jj ; $ii++)
 					{
 						$star = ceil($r[$ii]['amount'] / 10);
